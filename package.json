@@ -8,7 +8,7 @@
     "test": "ava test/"
   },
   "author": "",
-  "license": "ISC",
+  "license": "AGPL-3.0",
   "devDependencies": {
     "ava": "^0.22.0",
     "babel-cli": "^6.26.0",
