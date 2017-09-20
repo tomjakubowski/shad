@@ -48,15 +48,16 @@ const drawAALinearGradient = regl({
   frag: `
 precision mediump float;
 varying vec4 fr_Color;
-uniform float brightness;
 
 void main() {
-  gl_FragColor = vec4(brightness * fr_Color.rgb, fr_Color.a);
+  gl_FragColor = fr_Color;
 }`,
   vert: `
 precision mediump float;
 attribute vec2 position;
 attribute vec4 color;
+
+uniform mat2 lint;
 
 varying vec4 fr_Color;
 
@@ -64,24 +65,20 @@ uniform float dbg;
 
 void main() {
   fr_Color = color;
-  gl_Position = vec4(position, 0.0, 1.0);
+  gl_Position = vec4(lint * position, 0.0, 1.0);
 }`,
   attributes: {
     color: regl.prop('colors'),
     position: regl.prop('stops')
   },
   uniforms: {
-    brightness: (context, props, batchId) => {
-      if (!once) {
-        once = true;
-        console.log(props);
-      }
-      return 1.0;
-    },
+    lint: regl.prop('lint')
   },
   primitive: 'triangle strip',
-  count: 6
+  count: regl.prop('count')
 });
+
+const colors = vertsFromColors([[0.1, 1.0, 0.1, 1], [1.0, 0.1, 0.1, 1], [0.1, 1.0, 0.1, 1]]);
 
 regl.frame(({time}) => {
   regl.clear({
@@ -90,8 +87,12 @@ regl.frame(({time}) => {
   })
 
   drawAALinearGradient({
-    brightness: 0.1 * Math.sin(time) + 1.5,
-    stops: vertsFromStops([0.0, 0.25 * Maths.in(time) + 0.5, 1.0]),
-    colors: vertsFromColors([[0.1, 1.0, 0.1, 1], [1.0, 0.1, 0.1, 1], [0.1, 1.0, 0.1, 1]])
+    // lint: [0, 1,
+    //        1, 0],
+    lint: [1, 0,
+           0, 1],
+    stops: vertsFromStops([0.0, 0.25 * Math.sin(time) + 0.5, 1.0]),
+    colors: colors,
+    count: colors.length,
   });
 });
