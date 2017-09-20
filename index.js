@@ -6,17 +6,28 @@ const regl = fregl();
 const drawTriangle = regl({
   frag: `
 precision mediump float;
-uniform vec4 color;
+varying vec4 fr_Color;
+
 void main() {
-  gl_FragColor = color;
+  gl_FragColor = fr_Color;
 }`,
   vert: `
 precision mediump float;
 attribute vec2 position;
+attribute vec4 color;
+
+varying vec4 fr_Color;
+
 void main() {
+  fr_Color = color;
   gl_Position = vec4(position, 0.0, 1.0);
 }`,
   attributes: {
+    color: regl.buffer([
+      [1.0, 0.0, 0.0, 1.0],
+      [0.0, 1.0, 0.0, 1.0],
+      [0.0, 0.0, 1.0, 1.0],
+    ]),
     position: regl.buffer([
       [-0.5 , -0.5 ],
       [ 0.5 , -0.5 ],
@@ -35,12 +46,5 @@ regl.frame(({time}) => {
     depth: 1.0
   })
 
-  drawTriangle({
-    color: [
-      Math.cos(time * 0.3),
-      Math.sin(time * 0.5),
-      Math.cos(time * 0.2),
-      1.0
-    ]
-  });
+  drawTriangle({});
 });

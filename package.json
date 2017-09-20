@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "budo --live -H 127.0.0.1 index.js -- -t babelify",
+    "dev": "budo --live -H 127.0.0.1 index.js -- -t babelify --debug",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
