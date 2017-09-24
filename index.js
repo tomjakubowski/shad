@@ -16,7 +16,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fregl from 'regl';
-import baboon from 'baboon-image';
+import baboonData from 'baboon-image';
+import mat4 from 'gl-mat4';
+
+import cube from './cube';
 
 // set up full window canvas + context
 const regl = fregl();
@@ -34,20 +37,13 @@ const checker = regl.texture({
   mag: 'linear',
 });
 
-const HazardImg = new Image();
-HazardImg.src = '/hazard.png';
-HazardImg.onload = () => {
-  hazard = regl.texture({
-    data: HazardImg,
-    min: 'linear',
-    mag: 'linear',
-    flipY: true
-  });
-};
-let hazard = checker;
-const baboonTex = regl.texture({data: baboon, flipY: true});
+const baboon = regl.texture({data: baboonData, flipY: true, mipmap: true, min: 'mipmap'});
 
-const drawTriangle = regl({
+const camera = {
+  matrix: mat4.lookAt(mat4.create(), [4.0, 4.0, 4.0], [0, 0, 0], [0, 1, 0])
+};
+
+const drawCube = regl({
   frag: `
 precision mediump float;
 
@@ -60,33 +56,46 @@ void main() {
 `,
   vert: `
 precision mediump float;
-attribute vec2 position;
+uniform mat4 model;
+uniform mat4 camera;
+uniform mat4 proj;
+attribute vec3 position;
 attribute vec2 texCoord;
 
 varying vec2 fr_TexCoord;
 
 void main() {
   fr_TexCoord = texCoord;
-  gl_Position = vec4(position, 0.0, 1.0);
+  gl_Position = proj * camera * model * vec4(position, 1.0);
 }
 `,
   attributes: {
-    position: [[ 0.0,  0.8],
-               [-0.8, -0.8],
-               [ 0.8, -0.8]],
-    texCoord: [[ 0.5,  1.0],
-               [ 0.0,  0.0],
-               [ 1.0,  0.0]]
+    position: cube.position,
+    texCoord: cube.texCoord,
   },
   uniforms: {
-    tex: () => hazard
+    camera: camera.matrix,
+    model: ({time}, props) => {
+      const angle = props.angle;
+      const axis = props.axis || [0, 1, 0];
+      return mat4.rotate(mat4.create(), mat4.create(), angle, axis);
+    },
+    proj: mat4.perspective(mat4.create(), 45.0/360.0*2*Math.PI, 1.0, 0.1, 10.0),
+    tex: baboon,
   },
-  count: 3
+  depth: {
+    enable: true, // this is a default in regl, which is interesting...
+  },
+  count: 6*2*3,
 });
 
 regl.frame(({time}) => {
   regl.clear({
-    color: [0, 0, 0, 1]
+    color: [0, 0, 0, 1],
+    depth: 1
   });
-  drawTriangle();
+  drawCube({
+    angle: time % (2*Math.PI),
+    axis: [0, Math.sqrt(2), Math.sqrt(2)],
+  });
 });

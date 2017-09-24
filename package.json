@@ -28,6 +28,7 @@
   "dependencies": {
     "baboon-image": "^2.1.0",
     "brfs": "^1.4.3",
-    "get-pixels": "^3.3.0"
+    "get-pixels": "^3.3.0",
+    "gl-mat4": "^1.1.4"
   }
 }
