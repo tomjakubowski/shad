@@ -75,12 +75,11 @@ void main() {
   },
   uniforms: {
     camera: camera.matrix,
-    model: ({time}, props) => {
-      const angle = props.angle;
-      const axis = props.axis || [0, 1, 0];
-      return mat4.rotate(mat4.create(), mat4.create(), angle, axis);
-    },
-    proj: mat4.perspective(mat4.create(), 45.0/360.0*2*Math.PI, 1.0, 0.1, 10.0),
+    model: ({time}, props) =>
+      mat4.rotate(mat4.create(), mat4.create(), props.angle||0, props.axis||[0,1,0]),
+    proj: ({viewportWidth, viewportHeight}) =>
+      mat4.perspective(mat4.create(), 45.0/360.0*2*Math.PI, viewportWidth / viewportHeight,
+                       0.1, 10.0),
     tex: baboon,
   },
   depth: {
