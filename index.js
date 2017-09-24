@@ -21,78 +21,29 @@ import {clamp} from './util';
 // set up full window canvas + context
 const regl = fregl();
 
-const vertsFromStops = (stops) => {
-  const verts = [];
-  for (let stop of stops) {
-    // clamp stop to [0..1], then remap to [-1,1]
-    stop = 2.0 * clamp(stop, 0.0, 1.0) - 1.0;
-    verts.push([stop,  1.0]);
-    verts.push([stop, -1.0]);
-  }
-  return verts;
-};
+regl.clear({
+  color: [0.0, 0.0, 0.0, 1.0],
+  depth: 1.0
+});
 
-const vertsFromColors = (colors) => {
-  const verts = [];
-  for (let col of colors) {
-    verts.push(col);
-    verts.push(col);
-  }
-  return verts;
-};
-
-// console.table(vertsFromStops([0.0, 0.5, 1.0]));
-
-let once = false;
-const drawAALinearGradient = regl({
+const triangle = regl({
   frag: `
 precision mediump float;
-varying vec4 fr_Color;
-
 void main() {
-  gl_FragColor = fr_Color;
-}`,
+  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+}
+`,
   vert: `
 precision mediump float;
 attribute vec2 position;
-attribute vec4 color;
-
-uniform mat2 lint;
-
-varying vec4 fr_Color;
-
-uniform float dbg;
-
 void main() {
-  fr_Color = color;
-  gl_Position = vec4(lint * position, 0.0, 1.0);
-}`,
+  gl_Position = vec4(position, 0.0, 1.0);
+}
+`,
   attributes: {
-    color: regl.prop('colors'),
-    position: regl.prop('stops')
+    position: [[ 0.0,  0.8],
+               [-0.8, -0.8],
+               [ 0.8, -0.8]],
   },
-  uniforms: {
-    lint: regl.prop('lint')
-  },
-  primitive: 'triangle strip',
-  count: regl.prop('count')
-});
-
-const colors = vertsFromColors([[0.1, 1.0, 0.1, 1], [1.0, 0.1, 0.1, 1], [0.1, 1.0, 0.1, 1]]);
-
-regl.frame(({time}) => {
-  regl.clear({
-    color: [0.0, 0.0, 0.0, 1.0],
-    depth: 1.0
-  })
-
-  drawAALinearGradient({
-    // lint: [0, 1,
-    //        1, 0],
-    lint: [1, 0,
-           0, 1],
-    stops: vertsFromStops([0.0, 0.25 * Math.sin(time) + 0.5, 1.0]),
-    colors: colors,
-    count: colors.length,
-  });
-});
+  count: 3
+})();
