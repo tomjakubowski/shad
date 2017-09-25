@@ -20,9 +20,11 @@ import baboonData from 'baboon-image';
 import mat4 from 'gl-mat4';
 
 import cube from './cube';
+import drawTriangleFactory from './drawTriangle';
 
 // set up full window canvas + context
 const regl = fregl();
+const drawTriangle = drawTriangleFactory(regl);
 
 regl.clear({
   color: [0.0, 0.0, 0.0, 1.0],
@@ -77,13 +79,9 @@ void main() {
     camera: camera.matrix,
     model: ({time}, props) =>
       mat4.rotate(mat4.create(), mat4.create(), props.angle||0, props.axis||[0,1,0]),
-    proj: ({viewportWidth, viewportHeight}) =>
-      mat4.perspective(mat4.create(), 45.0/360.0*2*Math.PI, viewportWidth / viewportHeight,
-                       0.1, 10.0),
+    proj: ({pixelRatio}, props) =>
+      mat4.perspective(mat4.create(), (props.fov||45.0)/360.0*2*Math.PI, pixelRatio, 0.1, 10.0),
     tex: baboon,
-  },
-  depth: {
-    enable: true, // this is a default in regl, which is interesting...
   },
   count: 6*2*3,
 });
@@ -96,5 +94,7 @@ regl.frame(({time}) => {
   drawCube({
     angle: time % (2*Math.PI),
     axis: [0, Math.sqrt(2), Math.sqrt(2)],
+    fov: 30
   });
+  // drawTriangle();
 });
