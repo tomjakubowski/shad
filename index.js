@@ -26,24 +26,7 @@ import drawTriangleFactory from './drawTriangle';
 const regl = fregl();
 const drawTriangle = drawTriangleFactory(regl);
 
-regl.clear({
-  color: [0.0, 0.0, 0.0, 1.0],
-  depth: 1.0
-});
-
-const checker = regl.texture({
-  data: [255, 0, 255, 255,  0, 255, 0, 255,
-         0, 255, 255, 255,  0, 0, 255, 255],
-  width: 2,
-  height: 2,
-  mag: 'linear',
-});
-
 const baboon = regl.texture({data: baboonData, flipY: true, mipmap: true, min: 'mipmap'});
-
-const camera = {
-  matrix: mat4.lookAt(mat4.create(), [4.0, 4.0, 4.0], [0, 0, 0], [0, 1, 0])
-};
 
 const drawCube = regl({
   frag: `
@@ -68,7 +51,7 @@ varying vec2 fr_TexCoord;
 
 void main() {
   fr_TexCoord = texCoord;
-  gl_Position = proj * camera * model * vec4(position, 1.0);
+  gl_Position = camera * model * vec4(position, 1.0);
 }
 `,
   attributes: {
@@ -76,11 +59,24 @@ void main() {
     texCoord: cube.texCoord,
   },
   uniforms: {
-    camera: camera.matrix,
+    camera: ({pixelRatio}, props) => {
+      const camera = Object.assign({}, {
+        fov: 30,
+        pos: [4.0, 4.0, 4.0],
+        near: 0.1,
+        far: 10.0,
+      }, props.camera);
+      const view = mat4.lookAt(mat4.create(), camera.pos, [0, 0, 0], [0, 1, 0]);
+      const proj = mat4.perspective(mat4.create(),
+                                    (camera.fov/360.0) * 2*Math.PI,
+                                    pixelRatio,
+                                    camera.near, camera.far);
+      const out = mat4.create();
+      mat4.multiply(out, proj, view);
+      return out;
+    },
     model: ({time}, props) =>
       mat4.rotate(mat4.create(), mat4.create(), props.angle||0, props.axis||[0,1,0]),
-    proj: ({pixelRatio}, props) =>
-      mat4.perspective(mat4.create(), (props.fov||45.0)/360.0*2*Math.PI, pixelRatio, 0.1, 10.0),
     tex: baboon,
   },
   count: 6*2*3,
@@ -88,13 +84,19 @@ void main() {
 
 regl.frame(({time}) => {
   regl.clear({
-    color: [0, 0, 0, 1],
+    color: [100/255, 149/255, 237/255, 1],
     depth: 1
   });
   drawCube({
     angle: time % (2*Math.PI),
     axis: [0, Math.sqrt(2), Math.sqrt(2)],
-    fov: 30
+
+    camera: {
+      fov: 45.0,
+      pos: [4.0, 4.0, 4.0],
+      near: 0.1,
+      far: 10.0,
+    }
   });
   // drawTriangle();
 });
